@@ -6,7 +6,7 @@ local tpInterval = 0.001
 local TeleportEnabled = false
 
 local Settings = {
-	333 -- Speed for Rotation
+	333  -- Speed for Rotation
 }
 
 local ScreenGui = Instance.new("ScreenGui")
