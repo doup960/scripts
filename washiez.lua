@@ -110,7 +110,6 @@ local function updgui(status)
 	end
 end
 
-
 local function updateInterval()
 	if Interval then
 		local newInterval = tonumber(Interval.Text)
@@ -127,7 +126,6 @@ if Interval then
 	Interval.FocusLost:Connect(updateInterval)
 end
 
--- Function to check if the player is dead
 local function isPlayerDead()
 	local character = player.Character
 	if character then
@@ -140,10 +138,10 @@ local function isPlayerDead()
 end
 
 local function startTeleporting()
-	-- Teleport Loop (Slower)
+
 	while TeleportEnabled do
 		if isPlayerDead() then
-			TeleportEnabled = false -- Disable teleporting if dead
+			TeleportEnabled = false 
 			updgui(TeleportEnabled)
 			print("Teleport stopped due to death!")
 			break
@@ -164,7 +162,7 @@ local function startTeleporting()
 end
 
 local function startRotating()
-	-- Rotation Loop (Faster)
+
 	while TeleportEnabled do
 		if isPlayerDead() then
 			print("Rotation stopped due to death!")
@@ -174,9 +172,9 @@ local function startRotating()
 		local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
 		if rootPart then
 			local targetCFrame = rootPart.CFrame * CFrame.Angles(
-				math.rad(math.random(Settings[1], Settings[2])),  -- X-axis rotation
-				math.rad(math.random(Settings[1], Settings[2])),  -- Y-axis rotation
-				0  -- Z-axis (unchanged)
+				math.rad(math.random(Settings[1], Settings[2])),  
+				math.rad(math.random(Settings[1], Settings[2])),  
+				0  
 			)
 			rootPart.CFrame = targetCFrame
 			print("Rotating...")
@@ -185,13 +183,11 @@ local function startRotating()
 	end
 end
 
--- Start/stop teleport and rotation loops on toggle
 TP.Activated:Connect(function()
 	TeleportEnabled = not TeleportEnabled
 	updgui(TeleportEnabled)
 	print("TeleportEnabled:", TeleportEnabled)
 
-	-- Start teleporting and rotating when enabled
 	if TeleportEnabled then
 		task.spawn(startTeleporting)
 		task.spawn(startRotating)
