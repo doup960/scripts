@@ -6,7 +6,8 @@ local tpInterval = 0.001
 local TeleportEnabled = false
 
 local Settings = {
-	333  -- Speed for Rotation
+	50, -- Min
+	150 -- Max
 }
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -94,17 +95,6 @@ UITextSizeConstraint2.Name = "UITextSizeConstraint"
 UITextSizeConstraint2.MaxTextSize = 20
 UITextSizeConstraint2.Parent = Interval
 
-local function tp()
-	while TeleportEnabled do
-		local randomPlayer = players:GetPlayers()[math.random(1, #players:GetPlayers())]
-		if randomPlayer ~= player and randomPlayer.Character and randomPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			local targetPosition = randomPlayer.Character.HumanoidRootPart.Position
-			rootPart.CFrame = CFrame.new(targetPosition) 
-		end
-		wait(tpInterval)
-	end
-end
-
 local red = Color3.fromRGB(255, 88, 88)
 local green = Color3.fromRGB(88, 255, 88)
 
@@ -118,10 +108,6 @@ local function updgui(status)
 			TP.BackgroundColor3 = red
 		end
 	end
-end
-
-local function randomrotate(r1, r2)
-	return math.random(r1, r2)
 end
 
 
@@ -141,82 +127,73 @@ if Interval then
 	Interval.FocusLost:Connect(updateInterval)
 end
 
-local function GetRigType()
-    
-    if plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
-        return Enum.HumanoidRigType.R15
-    elseif plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-        return Enum.HumanoidRigType.R6
-    else
-        return nil
-    end
+-- Function to check if the player is dead
+local function isPlayerDead()
+	local character = player.Character
+	if character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health <= 0 then
+			return true
+		end
+	end
+	return false
 end
 
-local function GetDeadState(player)
-    if player.Character.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
-        return true
-    else
-        return false
-    end
+local function startTeleporting()
+	-- Teleport Loop (Slower)
+	while TeleportEnabled do
+		if isPlayerDead() then
+			TeleportEnabled = false -- Disable teleporting if dead
+			updgui(TeleportEnabled)
+			print("Teleport stopped due to death!")
+			break
+		end
+
+		local randomPlayer = players:GetPlayers()[math.random(1, #players:GetPlayers())]
+		if randomPlayer ~= player and randomPlayer.Character and randomPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local targetPosition = randomPlayer.Character.HumanoidRootPart.Position
+			local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+
+			if rootPart then
+				rootPart.CFrame = CFrame.new(targetPosition)
+				print("Teleported!")
+			end
+		end
+		wait(tpInterval)
+	end
 end
 
+local function startRotating()
+	-- Rotation Loop (Faster)
+	while TeleportEnabled do
+		if isPlayerDead() then
+			print("Rotation stopped due to death!")
+			break
+		end
 
-local function EnableNoClip()
-    
-    if GetDeadState(plr) == false then
-        if GetRigType() == Enum.HumanoidRigType.R6 then
-            plr.Character:FindFirstChild("Torso").CanCollide            = false
-            plr.Character:FindFirstChild("Head").CanCollide             = false
-            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = false
-        elseif GetRigType() == Enum.HumanoidRigType.R15 then
-            plr.Character:FindFirstChild("UpperTorso").CanCollide       = false
-            plr.Character:FindFirstChild("LowerTorso").CanCollide       = false
-            plr.Character:FindFirstChild("Head").CanCollide             = false
-            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = false
-        end
-    end
+		local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+		if rootPart then
+			local targetCFrame = rootPart.CFrame * CFrame.Angles(
+				math.rad(math.random(Settings[1], Settings[2])),  -- X-axis rotation
+				math.rad(math.random(Settings[1], Settings[2])),  -- Y-axis rotation
+				0  -- Z-axis (unchanged)
+			)
+			rootPart.CFrame = targetCFrame
+			print("Rotating...")
+		end
+		wait(0.01)
+	end
 end
 
-local function DisableNoClip()
-    
-    if GetDeadState(plr) == false then
-        if GetRigType() == Enum.HumanoidRigType.R6 then
-            plr.Character:FindFirstChild("Torso").CanCollide            = true
-            plr.Character:FindFirstChild("Head").CanCollide             = true
-            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = true
-        elseif GetRigType() == Enum.HumanoidRigType.R15 then
-            plr.Character:FindFirstChild("UpperTorso").CanCollide       = true
-            plr.Character:FindFirstChild("LowerTorso").CanCollide       = true
-            plr.Character:FindFirstChild("Head").CanCollide             = true
-            plr.Character:FindFirstChild("HumanoidRootPart").CanCollide = true
-        end
-    end
-end
-
-local function tp()
-
-    while TeleportEnabled do
-        local randomPlayer = players:GetPlayers()[math.random(1, #players:GetPlayers())]
-        if randomPlayer ~= player and randomPlayer.Character and randomPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPosition = randomPlayer.Character.HumanoidRootPart.Position
-            local rootPart = player.Character:WaitForChild("HumanoidRootPart")
-            
-            local targetCFrame = CFrame.new(targetPosition) * CFrame.Angles(0, math.rad(Settings[1]), 0)
-            rootPart.CFrame = targetCFrame
-        end
-        wait(tpInterval)
-    end
-end
-
-while TeleportEnabled do
-	local rootPart = player.Character:WaitForChild("HumanoidRootPart")
-	local targetCFrame = CFrame.Angles(0, math.rad(Settings[1]), 0)
-	rootPart.CFrame = targetCFrame
-	wait(0.00001)
-end
-
+-- Start/stop teleport and rotation loops on toggle
 TP.Activated:Connect(function()
 	TeleportEnabled = not TeleportEnabled
 	updgui(TeleportEnabled)
-	tp()
+	print("TeleportEnabled:", TeleportEnabled)
+
+	-- Start teleporting and rotating when enabled
+	if TeleportEnabled then
+		task.spawn(startTeleporting)
+		task.spawn(startRotating)
+	end
 end)
